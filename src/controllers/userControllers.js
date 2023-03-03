@@ -14,7 +14,7 @@ export async function signUp(req, res) {
 
         res.sendStatus(201);
     } catch (err) {
-        res.status(422).send(err.message);
+        res.status(500).send(err.message);
     }
 }
 export async function signIn(req, res) {
@@ -33,10 +33,10 @@ export async function signIn(req, res) {
             [userId.rows[0].id, token]
         );
 
-        return res.status(201).send({ token });
+        return res.status(200).send({ token });
     }
     catch (err) {
-        return res.status(422).send(err.message);
+        return res.status(500).send(err.message);
     }
 }
 

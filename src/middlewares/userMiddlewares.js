@@ -6,19 +6,20 @@ export async function signUpSchemaValidation(req, res, next) {
     const { email } = req.body;
 
     try {
-      const { err } = singUpSchema.validate(req.body, { abortEarly: false })
-  
-    if (err) {
-      const errs = err.details.map((detail) => detail.message);
-      return res.status(422).send({ errs });
-    }
+      const { error } = singUpSchema.validate(req.body, { abortEarly: false })
+      
+      if (error) {
+        const errors = error.details.map((d) => d.message);
+        return res.status(422).send(errors);
+      }
 
     const Exists = await db.query(`SELECT * FROM users WHERE email = $1;`, [email])
-    if (Exists.rowCount > 0) return res.status(409).send("Cliente já cadastrado no sistema!")
 
-
+    if (Exists.rowCount > 0) {
+      return res.status(409).send("Cliente já cadastrado no sistema!")
+    }
    } catch (err) {
-      return res.status(422).send(err.message);
+      return res.status(500).send(err.message);
     }
     next();
   }
@@ -28,10 +29,10 @@ export async function signInSchemaValidation(req, res, next) {
   const {email, password} = req.body;
 
   try {
-    const { err } = signInSchema.validate(req.body, { abortEarly: false });
+    const { error } = signInSchema.validate(req.body, { abortEarly: false });
 
-    if (err) {
-      const errs = err.details.map((detail) => detail.message);
+    if (error) {
+      const errs = error.details.map((detail) => detail.message);
       return res.status(422).send({ errs });
     }
 
@@ -50,6 +51,6 @@ export async function signInSchemaValidation(req, res, next) {
 
     next();
   } catch (err) {
-    return res.status(422).send(err.message);
+    return res.status(500).send(err.message);
   }
 }
