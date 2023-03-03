@@ -40,3 +40,32 @@ export async function signIn(req, res) {
     }
 }
 
+export async function getUser(req, res) {
+    const { authorization } = req.headers
+    const token = authorization?.replace('Bearer ', '')
+    try {
+        const sessionExists = await db.query(`SELECT * FROM sessions WHERE token=$1`, [token])
+
+        if (sessionExists.rowCount === 0) return res.status(401).send('Sessão expirada')
+
+        const userFind = await db.query(`SELECT * FROM users WHERE id = $1`, [sessionExists.rows[0].userId])
+
+        const findUrls = await db.query(
+            `SELECT id, "shortUrl", url, "visitCount" AS "visitCount"
+                 FROM urls
+                 WHERE "userId" = $1`
+            , [userFind.rows[0].id])
+
+        res.send(
+            {
+                id: userFind.rows[0].id,
+                name: userFind.rows[0].name,
+                visitCount: userFind.rows[0].views_count,
+                shortenedUrls: findUrls.rows
+            }
+        )
+    }
+    catch (error) {
+        res.status(500).send(error.message)
+    }
+}
