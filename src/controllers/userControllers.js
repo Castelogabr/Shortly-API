@@ -40,32 +40,42 @@ export async function signIn(req, res) {
     }
 }
 
-export async function getUser(req, res) {
+export async function getUser(req, res){
+try {
     const { authorization } = req.headers
-    const token = authorization?.replace('Bearer ', '')
-    try {
-        const sessionExists = await db.query(`SELECT * FROM sessions WHERE token=$1`, [token])
 
-        if (sessionExists.rowCount === 0) return res.status(401).send('Sessão expirada')
+    const token = authorization?.replace("Bearer ", '')
 
-        const userFind = await db.query(`SELECT * FROM users WHERE id = $1`, [sessionExists.rows[0].userId])
+    const userId = await db.query(`SELECT "userId" FROM sessions WHERE token = $1;`, [token]);
 
-        const findUrls = await db.query(
-            `SELECT id, "shortUrl", url, "visitCount" AS "visitCount"
-                 FROM urls
-                 WHERE "userId" = $1`
-            , [userFind.rows[0].id])
+    const result = await db.query(
+        `SELECT us.id, us.name,
+                SUM(ur."visitCount") as "visitCount",
+                json_agg(JSON_BUILD_OBJECT('id', ur.id, 'shortUrl', ur."shortUrl", 'url', ur.url, 'visitCount', ur."visitCount")) AS "shortenedUrls"
+                FROM users us
+                JOIN urls ur ON ur."userId" = us.id
+                WHERE us.id = $1
+                GROUP BY us.id;`, [userId.rows[0].userId]);
 
-        res.send(
-            {
-                id: userFind.rows[0].id,
-                name: userFind.rows[0].name,
-                visitCount: userFind.rows[0].views_count,
-                shortenedUrls: findUrls.rows
-            }
-        )
-    }
-    catch (error) {
-        res.status(500).send(error.message)
-    }
+    res.status(200).send(result.rows[0]);
+
+} catch (err) {
+    res.status(500).send(err.message);
 }
+}
+
+export async function getRanking(req, res) {
+    try {
+      const result = await db.query(
+        `SELECT users.id, users.name, 
+        COUNT("userId") AS "linksCount", 
+        COALESCE(SUM("visitCount"), 0) AS "visitCount" 
+        FROM users LEFT JOIN urls ON users.id = urls."userId" 
+        GROUP BY users.id 
+        ORDER BY "visitCount" DESC LIMIT 10;`
+      );
+      return res.status(200).send(result.rows.slice(0, 10));
+    } catch (error) {
+      return res.status(500).send(error.message);
+    }
+  }
