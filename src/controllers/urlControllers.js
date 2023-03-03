@@ -1,27 +1,23 @@
 import { db } from "../database/db.js";
 import { nanoid } from "nanoid";
 
-
 export async function shortenUrl(req, res) {
-  const  { userId } = req.body
   const { url } = req.body;
-  const shortUrl = nanoid(10);
+  const session = res.locals.session;
 
   try {
-    await db.query(
-      `INSERT INTO urls ("url", "userId", "shortUrl") VALUES ($1, $2, $3)`,
-      [url,userId, shortUrl]
-    );
+      const shortUrl = nanoid(6);
 
-    const short = await db.query(
-      `SELECT * FROM urls WHERE "shortUrl" = $1`,
-      [shortUrl]
-    );
-    res.status(201).send({ id: short.rows[0].id, shortUrl });
-  } catch (err) {
-    res.sendStatus(500);
+      await db.query('INSERT INTO urls (url, "shortUrl", "userId") VALUES ($1, $2, $3)', [url, shortUrl, session.userId]);
+
+      const id = await db.query("SELECT id FROM urls WHERE url = $1", [url]);
+
+      return res.status(201).send({id: id.rows[0].id, shortUrl});
+  } catch (error) {
+      return res.status(500).send(error.message);
   }
 }
+
 
 export async function getURL(req, res) {
   const {id} = req.params;
@@ -59,3 +55,4 @@ export async function getRedirect(req, res){
       return res.status(500).send(err.message);
   }
 }
+

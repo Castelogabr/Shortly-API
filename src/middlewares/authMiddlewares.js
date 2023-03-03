@@ -2,6 +2,7 @@ import { db } from "../database/db.js";
 
 export async function authorizationValidation(req, res, next) {
   const { authorization } = req.headers;
+
   const authToken = authorization?.replace("Bearer ", "");
 
   if (!authToken) {
@@ -17,9 +18,10 @@ export async function authorizationValidation(req, res, next) {
     if (session.rowCount === 0) {
       return res.sendStatus(401);
     }
+    res.locals.session = session.rows[0];
   } catch (err) {
     return res.sendStatus(500);
   }
 
-  next();
+  next();        
 }
