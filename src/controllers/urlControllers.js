@@ -62,12 +62,12 @@ export async function deleteUrl(req, res) {
   try {
     const { authorization } = req.headers
     const { id } = req.params;
-    const token = authorization?.replace("Bearer ", '')
+    const authToken = authorization?.replace("Bearer ", '')
 
     if (!parseInt(id))
       return res.sendStatus(404)
 
-    const userId = await db.query(`SELECT "userId" FROM sessions WHERE token = $1;`, [token]);
+    const userId = await db.query(`SELECT "userId" FROM sessions WHERE token = $1;`, [authToken]);
     const result = await db.query(`SELECT * FROM urls WHERE id = $1;`, [id]);
 
     if (result.rowCount === 0) return res.sendStatus(404)

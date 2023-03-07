@@ -44,9 +44,9 @@ export async function getUser(req, res){
 try {
     const { authorization } = req.headers
 
-    const token = authorization?.replace("Bearer ", '')
+    const authToken = authorization?.replace("Bearer ", '')
 
-    const userId = await db.query(`SELECT "userId" FROM sessions WHERE token = $1;`, [token]);
+    const userId = await db.query(`SELECT "userId" FROM sessions WHERE token = $1;`, [authToken]);
 
     const result = await db.query(
         `SELECT us.id, us.name,
@@ -75,7 +75,7 @@ export async function getRanking(req, res) {
         ORDER BY "visitCount" DESC LIMIT 10;`
       );
       return res.status(200).send(result.rows.slice(0, 10));
-    } catch (error) {
-      return res.status(500).send(error.message);
+    } catch (err) {
+      return res.status(500).send(err.message);
     }
   }
