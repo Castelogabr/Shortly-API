@@ -1,11 +1,10 @@
 import pg from "pg";
 import dotenv from "dotenv";
-
 dotenv.config();
 
 const { Pool } = pg;
 
-export const configDatabase = {
+const configDatabase = {
   connectionString: process.env.DATABASE_URL,
   ...(process.env.NODE_ENV === "production" && {
     ssl: {
@@ -14,4 +13,6 @@ export const configDatabase = {
   }),
 };
 
-export const db = new Pool(configDataBase);
+const db = new Pool(configDatabase);
+
+export default db;
